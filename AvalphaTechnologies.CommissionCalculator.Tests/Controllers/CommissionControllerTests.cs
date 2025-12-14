@@ -18,20 +18,27 @@ namespace AvalphaTechnologies.CommissionCalculator.Tests.Controllers
         public void Calculate_ReturnsExpectedResult()
         {
             var mockService = new Mock<ICommissionCalculatorService>();
-            var inputRequest = new CommissionCalculationRequest
+
+            mockService
+                .Setup(s => s.Calculate(It.IsAny<CommissionCalculationRequest>()))
+                .Returns(new CommissionCalculationResponse
+                {
+                    AvalphaTechnologiesCommissionAmount = 550m,
+                    CompetitorCommissionAmount = 95.5m
+                });
+
+            var controller = new CommisionController(mockService.Object);
+
+            var request = new CommissionCalculationRequest
             {
                 LocalSalesCount = 10,
                 ForeignSalesCount = 10,
                 AverageSaleAmount = 100m
             };
-            mockService.Setup(s => s.Calculate(inputRequest))
-                       .Returns(new CommissionCalculationResponse { AvalphaTechnologiesCommissionAmount = 550, CompetitorCommissionAmount = 95.5m });
 
-            var controller = new CommisionController(mockService.Object);
-
-            var request = new CommissionCalculationRequest { LocalSalesCount = 10, ForeignSalesCount = 10, AverageSaleAmount = 100 };
-            var result = controller.Calculate(request) as OkObjectResult;
-            var data = result.Value as CommissionCalculationResponse;
+            var actionResult = controller.Calculate(request);
+            var okResult = Assert.IsType<OkObjectResult>(actionResult);
+            var data = Assert.IsType<CommissionCalculationResponse>(okResult.Value);
 
             Assert.Equal(550m, data.AvalphaTechnologiesCommissionAmount);
             Assert.Equal(95.5m, data.CompetitorCommissionAmount);

@@ -72,7 +72,7 @@ Open browser: http://localhost:3000
 
 The app will call the backend API for commission calculation.
 
-⚠️ Ensure backend is running on port 5000 before submitting the frontend form.
+Ensure backend is running on port 5000 before submitting the frontend form.
 
 How to Test
 Backend Unit Tests

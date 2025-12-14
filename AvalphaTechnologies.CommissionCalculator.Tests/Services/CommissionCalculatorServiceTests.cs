@@ -43,9 +43,8 @@ namespace AvalphaTechnologies.CommissionCalculator.Tests.Services
                 ForeignSalesCount = 0,
                 AverageSaleAmount = 0
             };
-            var result = _service.Calculate(request);
-            Assert.Equal(0m, result.AvalphaTechnologiesCommissionAmount);
-            Assert.Equal(0m, result.CompetitorCommissionAmount);
+            var ex = Assert.Throws<ArgumentException>(() => _service.Calculate(request));
+            Assert.Contains("Average sale amount", ex.Message);
         }
     }
 }
