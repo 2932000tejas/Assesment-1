@@ -8,11 +8,12 @@ function App() {
     foreignSalesCount: '',
     averageSaleAmount: ''
   });
-  
+
   const [results, setResults] = useState({
-    avalphaTechnologiesCommission: 0,
-    competitorCommission: 0
-  });
+  avalphaTechnologiesCommission: 0,
+  competitorCommission: 0
+});
+  const [error, setError] = useState('');
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -27,24 +28,39 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // TODO: Replace with actual API call to backend
-    setTimeout(() => {
-      // Mock calculation for now
-      const localCommission = parseFloat(formData.localSalesCount) * parseFloat(formData.averageSaleAmount) * 0.20;
-      const foreignCommission = parseFloat(formData.foreignSalesCount) * parseFloat(formData.averageSaleAmount) * 0.35;
-      const avalphaTechnologiesTotal = localCommission + foreignCommission;
-      
-      const competitorLocal = parseFloat(formData.localSalesCount) * parseFloat(formData.averageSaleAmount) * 0.02;
-      const competitorForeign = parseFloat(formData.foreignSalesCount) * parseFloat(formData.averageSaleAmount) * 0.0755;
-      const competitorTotal = competitorLocal + competitorForeign;
-      
-      setResults({
-        avalphaTechnologiesCommission: avalphaTechnologiesTotal.toFixed(2),
-        competitorCommission: competitorTotal.toFixed(2)
+    setError('');
+
+    try {
+      const response = await fetch('/Commision', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          localSalesCount: parseInt(formData.localSalesCount),
+          foreignSalesCount: parseInt(formData.foreignSalesCount),
+          averageSaleAmount: parseFloat(formData.averageSaleAmount)
+        })
       });
+
+      if (!response.ok) {
+        const errMsg = await response.text();
+        throw new Error(errMsg || 'Failed to calculate commission');
+      }
+
+      const data = await response.json();
+
+      setResults({
+        avalphaTechnologiesCommission: parseFloat(data.avalphaTechnologiesCommissionAmount),
+        competitorCommission: parseFloat(data.competitorCommissionAmount)
+      });
+    } catch (err) {
+      setError(err.message);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
+  };
+
+  const formatCurrency = (value) => {
+    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(value);
   };
 
   return (
@@ -110,6 +126,7 @@ function App() {
                 {isLoading ? 'Calculating...' : 'Calculate Commission'}
               </button>
             </form>
+            {error && <p className="error-message">{error}</p>}
           </div>
 
           <div className="results-section">
@@ -121,7 +138,7 @@ function App() {
                   <span className="commission-rates">Local: 20% | Foreign: 35%</span>
                 </div>
                 <div className="result-amount">
-                  £{results.avalphaTechnologiesCommission}
+                  {formatCurrency(results.avalphaTechnologiesCommission)}
                 </div>
               </div>
               
@@ -131,7 +148,7 @@ function App() {
                   <span className="commission-rates">Local: 2% | Foreign: 7.55%</span>
                 </div>
                 <div className="result-amount">
-                  £{results.competitorCommission}
+                  {formatCurrency(results.competitorCommission)}
                 </div>
               </div>
             </div>
@@ -140,7 +157,7 @@ function App() {
               <div className="advantage-indicator">
                 <p className="advantage-text">
                   Avalpha Technologies advantage: 
-                  <strong> £{(results.avalphaTechnologiesCommission - results.competitorCommission).toFixed(2)}</strong>
+                  <strong> {formatCurrency(results.avalphaTechnologiesCommission - results.competitorCommission)}</strong>
                 </p>
               </div>
             )}
